@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -14,13 +15,27 @@ import (
 var width = flag.Int("width", math.MaxInt16, "Output image width")
 var height = flag.Int("height", math.MaxInt16, "Output image height")
 var output = flag.String("type", "png", "Output image format")
+var destination = flag.String("destination", "", "Output image folder")
 
 func main() {
 	flag.Parse()
 
+	if len(*destination) > 0 {
+		err := os.MkdirAll(*destination, os.ModePerm)
+		if err != nil {
+			fmt.Printf("Unable to create destination: %s\n", err)
+			os.Exit(1)
+		}
+	}
+
 	extMatch := regexp.MustCompile(`\.[a-zA-Z0-9]+$`)
 
-	for _, srcArg := range flag.Args() {
+	filelist := flag.Args()
+	if len(filelist) == 0 {
+		filelist = []string{"./*.*"}
+	}
+
+	for _, srcArg := range filelist {
 		srcFilenames, err := filepath.Glob(srcArg)
 		if err != nil {
 			log.Printf("Glob error: %s\n", err)
@@ -35,6 +50,10 @@ func main() {
 			}
 			dest := imaging.Fit(src, *width, *height, imaging.MitchellNetravali)
 			destFilename := extMatch.ReplaceAllString(srcFilename, "") + fmt.Sprintf("-%dx%d.%s", dest.Bounds().Dx(), dest.Bounds().Dy(), *output)
+			if len(*destination) > 0 {
+				_, file := filepath.Split(destFilename)
+				destFilename = filepath.Join(*destination, file)
+			}
 			err = imaging.Save(dest, destFilename)
 			if err != nil {
 				log.Printf("error: %s\n", err)
