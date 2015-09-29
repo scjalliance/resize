@@ -31,9 +31,9 @@ func main() {
 	extMatch := regexp.MustCompile(`\.[a-zA-Z0-9]+$`)
 
 	filelist := flag.Args()
-	if len(filelist) == 0 {
-		filelist = []string{"./*.*"}
-	}
+	// if len(filelist) == 0 {
+	// 	filelist = []string{"./*.*"}
+	// }
 
 	for _, srcArg := range filelist {
 		srcFilenames, err := filepath.Glob(srcArg)
